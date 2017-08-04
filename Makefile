@@ -25,12 +25,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/redsocks-dev
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libevent2
+  DEPENDS:=+libevent2 +libevent2-core +libevent2-extra
   TITLE:=Redirect any TCP connection to a SOCKS or HTTPS proxy server
 endef
 
 define Package/redsocks-dev/conffiles
-/etc/redsocks.conf.template
+/etc/config/redsocks
 endef
 
 define Package/redsocks-dev/description
@@ -52,7 +52,9 @@ define Package/redsocks-dev/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/redsocks $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) files/redsocks.init $(1)/etc/init.d/redsocks
-	$(INSTALL_CONF) files/redsocks.conf.template $(1)/etc/
+	$(INSTALL_DATA) files/redsocks.conf.template $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/redsocks.config $(1)/etc/config/redsocks
 endef
 
 $(eval $(call BuildPackage,redsocks-dev))

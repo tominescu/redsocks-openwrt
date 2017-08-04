@@ -27,7 +27,7 @@ start_redsocks() {
 		-e "s#|AUTO_PROXY|#$auto_proxy#" \
 		-e "s#|TIMEOUT|#${timeout:-5}#" \
 		$TPL >$CONFIG
-	service_start /usr/bin/redsocks -c $CONFIG || exit 1
+	service_start /usr/sbin/redsocks -c $CONFIG || exit 1
 
 	iptables-restore -n <<-EOF
 		*nat
@@ -69,7 +69,7 @@ start() {
 }
 
 stop() {
-	service_stop /usr/bin/redsocks
+	service_stop /usr/sbin/redsocks
 	iptables -t nat -D zone_lan_prerouting -p tcp -j REDSOCKS 2>/dev/null
 	iptables -t nat -F REDSOCKS 2>/dev/null && \
 	iptables -t nat -X REDSOCKS
