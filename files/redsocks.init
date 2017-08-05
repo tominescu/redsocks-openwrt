@@ -29,30 +29,40 @@ start_redsocks() {
 		$TPL >$CONFIG
 	service_start /usr/sbin/redsocks -c $CONFIG || exit 1
 
-	iptables-restore -n <<-EOF
-		*nat
-		:REDSOCKS - [0:0]
-		-A REDSOCKS -d $proxy_ip -j RETURN
-		-A REDSOCKS -d 0.0.0.0/8 -j RETURN
-		-A REDSOCKS -d 10.0.0.0/8 -j RETURN
-		-A REDSOCKS -d 100.64.0.0/10 -j RETURN
-		-A REDSOCKS -d 127.0.0.0/8 -j RETURN
-		-A REDSOCKS -d 169.254.0.0/16 -j RETURN
-		-A REDSOCKS -d 172.16.0.0/12 -j RETURN
-		-A REDSOCKS -d 192.0.0.0/24 -j RETURN
-		-A REDSOCKS -d 192.0.2.0/24 -j RETURN
-		-A REDSOCKS -d 192.88.99.0/24 -j RETURN
-		-A REDSOCKS -d 192.168.0.0/16 -j RETURN
-		-A REDSOCKS -d 198.18.0.0/15 -j RETURN
-		-A REDSOCKS -d 198.51.100.0/24 -j RETURN
-		-A REDSOCKS -d 203.0.113.0/24 -j RETURN
-		-A REDSOCKS -d 224.0.0.0/4 -j RETURN
-		-A REDSOCKS -d 240.0.0.0/4 -j RETURN
-		-A REDSOCKS -d 255.255.255.255 -j RETURN
-		-A REDSOCKS -p tcp -j REDIRECT --to-ports $local_port
-		-A PREROUTING -p tcp -j REDSOCKS
-		COMMIT
-EOF
+	# Add redir rules
+	PR_INDEX=`iptables -t nat -L PREROUTING|tail -n +3|sed -n -e '/^SHADOWSOCKS/='`
+	if [ -n "PR_INDEX" ]; then
+		let PR_INDEX+=1
+	else
+		PR_INDEX=`iptables -t nat -L PREROUTING|tail -n +3|sed -n -e '/^prerouting_rule/='`
+		if [ -n "PR_INDEX" ]; then
+			let PR_INDEX+=1
+		fi
+	fi
+	iptables -t nat -N REDSOCKS
+	iptables -t nat -I PREROUTING $PR_INDEX -p tcp -j REDSOCKS
+
+	iptables -t nat -A REDSOCKS -d $proxy_ip -j RETURN
+	iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN
+	iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN
+	iptables -t nat -A REDSOCKS -d 100.64.0.0/10 -j RETURN
+	iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN
+	iptables -t nat -A REDSOCKS -d 169.254.0.0/16 -j RETURN
+	iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN
+	iptables -t nat -A REDSOCKS -d 192.0.0.0/24 -j RETURN
+	iptables -t nat -A REDSOCKS -d 192.0.2.0/24 -j RETURN
+	iptables -t nat -A REDSOCKS -d 192.88.99.0/24 -j RETURN
+	iptables -t nat -A REDSOCKS -d 192.168.0.0/16 -j RETURN
+	iptables -t nat -A REDSOCKS -d 198.18.0.0/15 -j RETURN
+	iptables -t nat -A REDSOCKS -d 198.51.100.0/24 -j RETURN
+	iptables -t nat -A REDSOCKS -d 203.0.113.0/24 -j RETURN
+	iptables -t nat -A REDSOCKS -d 224.0.0.0/4 -j RETURN
+	iptables -t nat -A REDSOCKS -d 240.0.0.0/4 -j RETURN
+	iptables -t nat -A REDSOCKS -d 255.255.255.255 -j RETURN
+	iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports $local_port
+	
+	# Add rules for router self
+	#iptables -t nat -A OUTPUT -p tcp -j REDSOCKS
 }
 
 start() {
@@ -63,6 +73,7 @@ start() {
 
 stop() {
 	service_stop /usr/sbin/redsocks
+	#iptables -t nat -D OUTPUT -p tcp -j REDSOCKS 2>/dev/null
 	iptables -t nat -D PREROUTING -p tcp -j REDSOCKS 2>/dev/null
 	iptables -t nat -F REDSOCKS 2>/dev/null && \
 	iptables -t nat -X REDSOCKS
