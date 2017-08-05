@@ -25,5 +25,6 @@ RedSocks for OpenWrt
    make package/redsocks-dev/compile V=99
    ```
 
+
   [1]: https://github.com/darkk/redsocks
   [2]: https://github.com/tominescu/redsocks-openwrt/releases
