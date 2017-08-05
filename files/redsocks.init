@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=90
+START=95
 STOP=15
 
 SERVICE_USE_PID=1
@@ -50,16 +50,9 @@ start_redsocks() {
 		-A REDSOCKS -d 240.0.0.0/4 -j RETURN
 		-A REDSOCKS -d 255.255.255.255 -j RETURN
 		-A REDSOCKS -p tcp -j REDIRECT --to-ports $local_port
-		-A zone_lan_prerouting -p tcp -j REDSOCKS
+		-A PREROUTING -p tcp -j REDSOCKS
 		COMMIT
 EOF
-}
-
-boot() {
-	until iptables-save -t nat | grep -q "^:zone_lan_prerouting"; do
-		sleep 1
-	done
-	start
 }
 
 start() {
@@ -70,7 +63,7 @@ start() {
 
 stop() {
 	service_stop /usr/sbin/redsocks
-	iptables -t nat -D zone_lan_prerouting -p tcp -j REDSOCKS 2>/dev/null
+	iptables -t nat -D PREROUTING -p tcp -j REDSOCKS 2>/dev/null
 	iptables -t nat -F REDSOCKS 2>/dev/null && \
 	iptables -t nat -X REDSOCKS
 }
