@@ -1,0 +1,4 @@
+#!/bin/sh
+# redsocks integration for firewall3
+
+/etc/init.d/redsocks restart

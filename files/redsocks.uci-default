@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOT
+	delete firewall.redsocks
+	set firewall.redsocks=include
+	set firewall.redsocks.type=script
+	set firewall.redsocks.path=/usr/share/redsocks/firewall.include
+	set firewall.redsocks.family=any
+	set firewall.redsocks.reload=1
+	commit firewall
+EOT
+
+exit 0

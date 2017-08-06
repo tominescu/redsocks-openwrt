@@ -55,6 +55,11 @@ define Package/redsocks-dev/install
 	$(INSTALL_DATA) files/redsocks.conf.template $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/redsocks.config $(1)/etc/config/redsocks
+	$(INSTALL_DIR) $(1)/etc/uci-defaults/
+	$(INSTALL_DATA) files/redsocks.uci-default $(1)/etc/uci-defaults/97-redsocks
+	$(INSTALL_DIR) $(1)//usr/share/redsocks/
+	$(INSTALL_DATA) files/firewall.include $(1)/usr/share/redsocks/firewall.include
+
 endef
 
 $(eval $(call BuildPackage,redsocks-dev))

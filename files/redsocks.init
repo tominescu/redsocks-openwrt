@@ -30,15 +30,8 @@ start_redsocks() {
 	service_start /usr/sbin/redsocks -c $CONFIG || exit 1
 
 	# Add redir rules
-	PR_INDEX=`iptables -t nat -L PREROUTING|tail -n +3|sed -n -e '/^SHADOWSOCKS/='`
-	if [ -n "PR_INDEX" ]; then
-		PR_INDEX=`iptables -t nat -L PREROUTING|tail -n +3|sed -n -e '/^prerouting_rule/='`
-		if [ -n "PR_INDEX" ]; then
-			let PR_INDEX+=1
-		fi
-	fi
 	iptables -t nat -N REDSOCKS
-	iptables -t nat -I PREROUTING $PR_INDEX -p tcp -j REDSOCKS
+	iptables -t nat -A PREROUTING -p tcp -j REDSOCKS
 
 	iptables -t nat -A REDSOCKS -d $proxy_ip -j RETURN
 	iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN
