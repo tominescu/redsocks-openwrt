@@ -12,6 +12,7 @@ TPL=/etc/redsocks.conf.template
 
 get_args() {
 	config_get_bool enable $1 enable
+	config_get_bool global $1 global
 	config_get local_port $1 local_port
 	config_get proxy_type $1 proxy_type
 	config_get proxy_ip $1 proxy_ip
@@ -32,7 +33,9 @@ start_redsocks() {
 	# Add redir rules
 	iptables -t nat -N REDSOCKS
 	iptables -t nat -A PREROUTING -p tcp -j REDSOCKS
+	iptables -t nat -A OUTPUT -p tcp -j REDSOCKS
 
+	# bypass local domain
 	iptables -t nat -A REDSOCKS -d $proxy_ip -j RETURN
 	iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN
 	iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN
@@ -50,10 +53,9 @@ start_redsocks() {
 	iptables -t nat -A REDSOCKS -d 224.0.0.0/4 -j RETURN
 	iptables -t nat -A REDSOCKS -d 240.0.0.0/4 -j RETURN
 	iptables -t nat -A REDSOCKS -d 255.255.255.255 -j RETURN
-	iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports $local_port
-	
-	# Add rules for router self
-	#iptables -t nat -A OUTPUT -p tcp -j REDSOCKS
+
+	# global
+	[ "$global" = 1 ] && iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to $local_port
 }
 
 start() {
@@ -64,8 +66,7 @@ start() {
 
 stop() {
 	service_stop /usr/sbin/redsocks
-	#iptables -t nat -D OUTPUT -p tcp -j REDSOCKS 2>/dev/null
-	iptables -t nat -D PREROUTING -p tcp -j REDSOCKS 2>/dev/null
-	iptables -t nat -F REDSOCKS 2>/dev/null && \
-	iptables -t nat -X REDSOCKS
+	iptables -t nat -D OUTPUT -p tcp -j REDSOCKS
+	iptables -t nat -D PREROUTING -p tcp -j REDSOCKS
+	iptables -t nat -F REDSOCKS && iptables -t nat -X REDSOCKS
 }
